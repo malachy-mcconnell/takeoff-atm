@@ -13,6 +13,11 @@ type ATM struct {
 	Deposited USD
 }
 
+func NewATM() *ATM {
+	atm := ATM{}
+	return &atm
+}
+
 func (a ATM) ValidateWithdrawal(amount USD) (USD, USD, error) {
 	var err error
 	if amount > a.Balance {
@@ -42,10 +47,4 @@ func (a *ATM) Withdraw(amount USD) error {
 
 func (a *ATM) Deposit(amount USD) {
 	a.Deposited = a.Deposited + amount
-}
-
-func (a ATM) End() {
-	//Persist balance
-	//return persistence.WriteBalance(a)
-	// Okay, but not here. No persistence in the domain model
 }

@@ -2,7 +2,6 @@ package domain
 
 import (
 	"errors"
-	"fmt"
 )
 
 const overdraftFee = USD(500)
@@ -26,16 +25,20 @@ func NewAccount(ID string, pin string, balance USD) *Account {
 	return &account
 }
 
+func NilAccount() *Account {
+	nilAccount := Account{}
+	return &nilAccount
+}
+
 func (a *Account) Authorize(challengePin string) error {
 	if a.pin == challengePin {
-		fmt.Println("DID did auth")
 		a.authorized = true
 		return nil
 	}
 	return errors.New("PIN does not match account id. Please try again.")
 }
 
-func (a Account) Logout() {
+func (a *Account) Logout() {
 	a.ID = ""
 	a.pin = ""
 	a.authorized = false
@@ -79,8 +82,4 @@ func (a Account) ReadBalance() (USD, error) {
 		return a.balance, nil
 	}
 	return USD(0), notAuthorized
-}
-
-func (a *Account) logout() {
-	a.authorized = false
 }

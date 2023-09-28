@@ -17,7 +17,6 @@ const pathInitialAccounts = "./data/accounts-initial.csv"
 // we do not change PINs. We do adjust balances; but those are written to transactions.csv
 // so accounts initial is never written to, and balances come from the transactions.csv
 func LoadAccountByID(ID string) (*domain.Account, error) {
-	fmt.Println("Did...")
 	f, err := os.Open(pathInitialAccounts)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -29,10 +28,8 @@ func LoadAccountByID(ID string) (*domain.Account, error) {
 	defer f.Close()
 
 	csvReader := csv.NewReader(f)
-	fmt.Println("Entering...")
 	for {
 		row, err := csvReader.Read()
-		fmt.Println("Got a row")
 		if err == io.EOF {
 			break
 		}
@@ -43,7 +40,7 @@ func LoadAccountByID(ID string) (*domain.Account, error) {
 				err,
 			)
 		}
-		fmt.Println(row[0] + " vs " + ID)
+
 		if row[0] == ID {
 			openingBalance, err := balanceFromTransactionLogOrInitial(ID, row[2])
 			if err != nil {
