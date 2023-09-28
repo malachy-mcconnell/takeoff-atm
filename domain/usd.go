@@ -15,6 +15,7 @@ func (u USD) ToString() string {
 }
 
 func USDFromString(value string) (USD, error) {
+	// TODO: better to strip ,. and parse to int; needs to have dot or add 00
 	temp, err := strconv.ParseFloat(value, 32)
 	if err != nil {
 		// TODO: Wrap error messages from ParseFloat to be more meaningful

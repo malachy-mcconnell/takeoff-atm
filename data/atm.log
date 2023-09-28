@@ -1,0 +1,12 @@
+2023/09/28 10:15:21 ATM switched on.
+2023/09/28 10:15:32 Authorization error PIN does not match account id. Please try again..
+2023/09/28 10:15:40 Authorization error Command 'authorize' must include account ID and PIN, space separated.
+2023/09/28 10:15:54 Authorization error Account ID not matched. Please check and try again. Account ID 2859459813 not found..
+2023/09/28 10:15:59 Authorized account 2859459814.
+2023/09/28 10:16:22 Accepted deposit (no ledger). Account 2859459814. Amount 10000.00.
+2023/09/28 10:17:11 Invalid withdrawal ammount 30
+2023/09/28 10:17:30 Fee applied (no ledger). Account 2859459814. Fee amount 5.00.
+2023/09/28 10:18:57 ATM switched off ('end' command).
+2023/09/28 10:18:59 ATM switched on.
+2023/09/28 10:19:16 Authorized account 2859459814.
+2023/09/28 10:19:26 ATM switched off ('end' command).
