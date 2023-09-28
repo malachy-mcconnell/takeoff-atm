@@ -23,6 +23,6 @@ func USDFromString(value string) (USD, error) {
 	return USD((float32(temp) * 100)), nil
 }
 
-func (u USD) MultipleOf(z int32) bool {
-	return u%USD(z) == 0
+func (u USD) MultipleOf(z USD) bool {
+	return u%z == 0
 }

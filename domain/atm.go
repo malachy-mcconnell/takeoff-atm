@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-const billSize = 20
+const billSize = USD(2000)
 const ATMFee = USD(0)
 
 type ATM struct {
@@ -22,17 +22,17 @@ func (a ATM) ValidateWithdrawal(amount USD) (USD, USD, error) {
 		err = errors.New(
 			fmt.Sprintf("Unable to dispense full amount requested at this time. Dispensing %s instead.", amount.ToString()),
 		)
-		return amount, ATMFee, err
+		return amount, ATMFee, err //nil
 	}
 	if !amount.MultipleOf(billSize) {
-		err = errors.New(fmt.Sprintf("Amount must be a multiple of %d", billSize))
+		err = errors.New(fmt.Sprintf("Amount must be a multiple of %s", billSize.ToString()))
 		return amount, ATMFee, err
 	}
 	// Else amount is valid
 	return amount, ATMFee, nil
 }
 
-func (a ATM) Withdraw(amount USD) error {
+func (a *ATM) Withdraw(amount USD) error {
 	if amount > a.Balance {
 		return errors.New("This ATM cannot dispense that amount.")
 	}
@@ -40,7 +40,7 @@ func (a ATM) Withdraw(amount USD) error {
 	return nil
 }
 
-func (a ATM) Deposit(amount USD) {
+func (a *ATM) Deposit(amount USD) {
 	a.Deposited = a.Deposited + amount
 }
 

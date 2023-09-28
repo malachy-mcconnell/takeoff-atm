@@ -5,8 +5,8 @@ import (
 	"os"
 )
 
-const pathATMBalance = "../data/atm.csv"
-const openingBalance = domain.USD(1000000)
+const pathATMBalance = "./data/atm.csv"
+const openingATMBalance = domain.USD(1000000)
 
 func WriteATMBalance(ATM domain.ATM) error {
 	f, err := os.Create(pathATMBalance) // Always overwrite existing
@@ -27,6 +27,10 @@ func SetATMBalance(ATM *domain.ATM) error {
 	if err != nil {
 		return err
 	}
+	dataString := string(data)
+	if len(dataString) == 0 {
+		return ResetATMBalance(ATM)
+	}
 	ATM.Balance, err = domain.USDFromString(string(data))
 	if err != nil {
 		return err
@@ -35,6 +39,6 @@ func SetATMBalance(ATM *domain.ATM) error {
 }
 
 func ResetATMBalance(ATM *domain.ATM) error {
-	ATM.Balance = openingBalance
+	ATM.Balance = openingATMBalance
 	return WriteATMBalance(*ATM)
 }

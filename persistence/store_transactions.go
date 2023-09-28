@@ -8,33 +8,33 @@ import (
 	"os"
 )
 
-const pathTransactions = "../data/transactions.csv"
+const pathTransactions = "./data/transactions.csv"
 
 type Transactions []domain.Transaction
 
-func (t Transactions) AppendCSVRow(row []string) error {
+func appendCSVRow(t Transactions, row []string) (Transactions, error) {
 	transaction, err := domain.NewTransactionFromCSVRow(row)
 	if err != nil {
-		return err
+		return Transactions{}, err
 	}
-	t.Append(transaction)
-	return nil
+	return append(t, transaction), nil
 }
 
-// NOT USED, Really. Combine.
-func (t Transactions) Append(transaction domain.Transaction) {
-	t = append(t, transaction)
-}
-
+// RecordTransaction open file for writing, append this one transaction and close file
+// TODO: Make scalable; essentially a write lock (mutex but better to use a channel and one go routine)
+// so, think: a CSVWriterChannel, send the details to the channel, log on failure
+// I mean if persistence is asynchronous, what to do when a save fails? [switch ATM off?]
 func RecordTransaction(t domain.Transaction) error {
-	// open file for writing,
-	// write it
-	// close file
+	f, err := os.OpenFile(pathTransactions, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal("Unable to open transactions file for writing "+pathTransactions, err)
+	}
+	defer f.Close()
 
-	// TODO: Make scalable; essentially a write lock (mutex but better to use a channel and one go routine)
-	// so, think: a CSVWriterChannel, send the details to the channel, log on failure
-	// I mean if persistence is asynchronous, what to do when a save fails? [switch ATM off?]
-	return nil
+	csvWriter := csv.NewWriter(f)
+	csvWriter.Write(t.AsStringSlice())
+	csvWriter.Flush()
+	return csvWriter.Error()
 }
 
 func LoadTransactions(ID string) (Transactions, error) {
@@ -56,7 +56,7 @@ func LoadTransactions(ID string) (Transactions, error) {
 			log.Fatal("Unable to parse file as CSV for "+pathTransactions, err)
 		}
 		if row[0] == ID {
-			err = accountTransactions.AppendCSVRow(row)
+			accountTransactions, err = appendCSVRow(accountTransactions, row)
 			if err != nil {
 				return accountTransactions, err
 			}
