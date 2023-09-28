@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-// To ensure a currency number with precisely two decimal places
+// USD To ensure a currency number with precisely two decimal places
 // and handle any rounding that might be needed.
 // This code works with cents as integers and converts to dollars for display only
 type USD int32
@@ -15,7 +15,8 @@ func (u USD) ToString() string {
 }
 
 func USDFromString(value string) (USD, error) {
-	// TODO: better to strip ,. and parse to int; needs to have dot or add 00
+	// TODO: Check decimal places count -- must be 2 or less
+	// TODO: Better to strip ,. and parse to int; needs to have dot or add 00
 	temp, err := strconv.ParseFloat(value, 32)
 	if err != nil {
 		// TODO: Wrap error messages from ParseFloat to be more meaningful
