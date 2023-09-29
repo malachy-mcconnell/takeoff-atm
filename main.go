@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/malachy-mcconnell/takeoff-atm/domain"
+	"github.com/malachy-mcconnell/takeoff-atm/bank"
 	"github.com/malachy-mcconnell/takeoff-atm/persistence"
 	"github.com/malachy-mcconnell/takeoff-atm/service"
 	"log"
@@ -19,8 +19,8 @@ func main() {
 	// Logging and history display.
 	// UNIT TEST? eg one test?
 
-	var sessionAccount *domain.Account
-	var atm *domain.ATM
+	var sessionAccount *bank.Account
+	var atm *bank.ATM
 	var logoutTimer *time.Timer
 	var instruction []string
 
@@ -36,8 +36,8 @@ func main() {
 	defer logFileHandle.Close()
 	log.Println("ATM switched on.")
 
-	atm = domain.NewATM()
-	sessionAccount = domain.NilAccount()
+	atm = bank.NewATM()
+	sessionAccount = bank.NilAccount()
 
 	err = persistence.SetATMBalance(atm)
 	if err != nil {
@@ -125,28 +125,28 @@ func establishLogger() (*os.File, error) {
 	return f, nil
 }
 
-func auth(instruction []string) (sessionAccount *domain.Account, err error) {
+func auth(instruction []string) (sessionAccount *bank.Account, err error) {
 	if len(instruction) != 3 {
 		err = errors.New("Command 'authorize' must include account ID and PIN, space separated")
-		return domain.NilAccount(), err
+		return bank.NilAccount(), err
 	}
 
 	sessionAccount, err = persistence.LoadAccountByID(instruction[1])
 	if err != nil {
 		err = errors.New("Account ID not matched. Please check and try again. " + err.Error())
-		return domain.NilAccount(), err
+		return bank.NilAccount(), err
 	}
 
 	// Login if pin matches
 	err = sessionAccount.Authorize(instruction[2])
 	if err != nil {
-		return domain.NilAccount(), err
+		return bank.NilAccount(), err
 	}
 
 	return sessionAccount, nil
 }
 
-func startLogoutTimer(sessionAccount *domain.Account, transacting *bool, logoutAfterTransaction *bool) *time.Timer {
+func startLogoutTimer(sessionAccount *bank.Account, transacting *bool, logoutAfterTransaction *bool) *time.Timer {
 	logoutTimer := time.NewTimer(time.Minute * 2)
 
 	// This can fire mid-transaction, which we really don't want.
@@ -154,15 +154,12 @@ func startLogoutTimer(sessionAccount *domain.Account, transacting *bool, logoutA
 	// The pointers of the go func() are in the closure of the go func
 	go func() {
 		<-logoutTimer.C
-		fmt.Println("Logout timer fired.")
 		if !*transacting {
-			fmt.Println("Not transacting.")
 			if sessionAccount.Authorized() {
 				sessionAccount.Logout()
 				fmt.Println("Account is logged out after two minutes idle.")
 			}
 		} else {
-			fmt.Println("Transacting, wait for logout")
 			*logoutAfterTransaction = true
 		}
 	}()
@@ -172,16 +169,15 @@ func startLogoutTimer(sessionAccount *domain.Account, transacting *bool, logoutA
 
 func resetTimer(timer *time.Timer) {
 	if timer != nil {
-		// Stop the timer, drain and reset it
+		// Stop the timer, drain it if needed, and then reset it
 		if !timer.Stop() {
 			<-timer.C
 		}
 		timer.Reset(time.Minute * 2)
-		//fmt.Println("Reset the logout timer due to activity.")
 	}
 }
 
-func processNonAuthInstructions(instruction []string, atm *domain.ATM) (cont bool, stop bool, err error) {
+func processNonAuthInstructions(instruction []string, atm *bank.ATM) (cont bool, stop bool, err error) {
 	err = nil
 	cont = true
 	stop = false
@@ -205,10 +201,17 @@ func processNonAuthInstructions(instruction []string, atm *domain.ATM) (cont boo
 	}
 
 	if instruction[0] == "reset" {
-		fmt.Println("Reset command received (reset all storage to initial values (ATM and accounts)).")
-		// TODO: Blow out the transactions storage
-		// Reset the ATM balance and continue
-		return cont, stop, persistence.ResetATMBalance(atm)
+		err = errors.Join(
+			persistence.ResetATMBalance(atm),
+			persistence.ResetTransactionsStorage(),
+		)
+		if err == nil {
+			println("ATM balance reset, transactions records deleted, account opening balances reset.")
+			log.Println("---------------")
+			log.Println("---  reset  ---")
+			log.Println("---------------")
+		}
+		return cont, stop, err
 	}
 
 	if instruction[0] == "atm_balance" {
@@ -219,15 +222,14 @@ func processNonAuthInstructions(instruction []string, atm *domain.ATM) (cont boo
 	return false, false, nil
 }
 
-func processWithdrawal(instruction []string, sessionAccount *domain.Account, atm *domain.ATM) {
+func processWithdrawal(instruction []string, sessionAccount *bank.Account, atm *bank.ATM) {
 	var err error
 	var preamble = ""
-	var balance domain.USD
-	var amount domain.USD
-	var amountAdjusted domain.USD
-	var feeAmount domain.USD
+	var balance bank.USD
+	var amount bank.USD
+	var amountAdjusted bank.USD
+	var feeAmount bank.USD
 
-	fmt.Println("Account withdraw command received.")
 	if atm.Balance == 0 {
 		fmt.Println("Unable to process your withdrawal at this time.")
 		return
@@ -269,7 +271,7 @@ func processWithdrawal(instruction []string, sessionAccount *domain.Account, atm
 		log.Printf("Fee applied (no ledger). Account %s. Fee amount %s.\n", sessionAccount.ID, feeAmount.ToString())
 		preamble = fmt.Sprintf("You have been charged an overdraft fee of $%s. ", feeAmount.ToString())
 		transact(-1*feeAmount, sessionAccount)
-		feeAmount = domain.USD(0)
+		feeAmount = bank.USD(0)
 	}
 	balance, err = sessionAccount.ReadBalance()
 	if err != nil {
@@ -282,9 +284,9 @@ func processWithdrawal(instruction []string, sessionAccount *domain.Account, atm
 	return
 }
 
-func processAuthInstructions(instruction []string, sessionAccount *domain.Account, atm *domain.ATM, logoutTimer *time.Timer) {
+func processAuthInstructions(instruction []string, sessionAccount *bank.Account, atm *bank.ATM, logoutTimer *time.Timer) {
 	var err error
-	var amount domain.USD
+	var amount bank.USD
 	var transactions persistence.Transactions
 
 	switch instruction[0] {
@@ -320,7 +322,7 @@ func processAuthInstructions(instruction []string, sessionAccount *domain.Accoun
 			fmt.Println("No history found")
 			break
 		}
-		fmt.Println(transactions)
+		fmt.Printf(transactions.AsTextTable())
 
 	case "logout":
 		if !sessionAccount.Authorized() {
@@ -337,18 +339,18 @@ func processAuthInstructions(instruction []string, sessionAccount *domain.Accoun
 	}
 }
 
-func validateAmount(amount string, instruction string) (domain.USD, error) {
-	USDAmount, err := domain.USDFromString(amount)
+func validateAmount(amount string, instruction string) (bank.USD, error) {
+	USDAmount, err := bank.USDFromString(amount)
 	if err != nil {
 		err = errors.New(
 			fmt.Sprintf("Amount must be numeric like this '%s 100'\n", instruction),
 		)
-		USDAmount = domain.USD(0)
+		USDAmount = bank.USD(0)
 	}
 	return USDAmount, err
 }
 
-func validateWithdrawalAmount(amount domain.USD, atm *domain.ATM, account *domain.Account) (amountAllowed domain.USD, fee domain.USD, err error) {
+func validateWithdrawalAmount(amount bank.USD, atm *bank.ATM, account *bank.Account) (amountAllowed bank.USD, fee bank.USD, err error) {
 	amountAllowed, fee, err = atm.ValidateWithdrawal(amount)
 	if err != nil {
 		if amount == amountAllowed {
@@ -366,7 +368,7 @@ func validateWithdrawalAmount(amount domain.USD, atm *domain.ATM, account *domai
 	return amountAllowed, fee, nil
 }
 
-func transact(amount domain.USD, account *domain.Account) {
+func transact(amount bank.USD, account *bank.Account) {
 	err := account.Update(amount)
 	if err != nil {
 		log.Printf("transact() failed to update account %s. %s\n", account.ID, err.Error())
@@ -374,14 +376,14 @@ func transact(amount domain.USD, account *domain.Account) {
 	// err here isn't really allowed. How to recover? We already gave the user the cash from the machine
 	// Propose: Log a fatal error and turn the machine off (maintenance mode)
 	// TODO: Implement that ^^
-	_ = persistence.RecordTransaction(domain.NewTransaction(amount, *account))
+	_ = persistence.RecordTransaction(bank.NewTransaction(amount, *account))
 	if err != nil {
 		log.Printf("transact() failed to persist the transaction %s. %s\n", account.ID, err.Error())
 	}
 	// TODO: Handle both these errors by logging fatal, and suspend machine (no spec on how to suspend the machine)
 }
 
-func displayCurrentBalance(sessionAccount *domain.Account) {
+func displayCurrentBalance(sessionAccount *bank.Account) {
 	currentBalance, err := sessionAccount.ReadBalance()
 	if err != nil {
 		log.Printf("Error reading balance of account %s. %s\n", sessionAccount.ID, err.Error())

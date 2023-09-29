@@ -1,4 +1,4 @@
-package domain
+package bank
 
 import (
 	"errors"

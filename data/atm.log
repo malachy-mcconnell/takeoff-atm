@@ -10,3 +10,23 @@
 2023/09/28 10:18:59 ATM switched on.
 2023/09/28 10:19:16 Authorized account 2859459814.
 2023/09/28 10:19:26 ATM switched off ('end' command).
+2023/09/28 15:48:26 ATM switched on.
+2023/09/28 15:48:29 ATM switched off ('end' command).
+2023/09/28 17:32:50 ATM switched on.
+2023/09/28 17:33:00 ATM switched off ('end' command).
+2023/09/28 18:22:52 ATM switched on.
+2023/09/28 18:22:55 ATM switched off ('end' command).
+2023/09/28 20:06:48 ATM switched on.
+2023/09/28 20:06:54 Authorized account 2859459814.
+2023/09/28 20:07:03 Accepted deposit (no ledger). Account 2859459814. Amount 105.00.
+2023/09/28 20:07:11 Fee applied (no ledger). Account 2859459814. Fee amount 5.00.
+2023/09/28 20:08:27 ATM switched off ('end' command).
+2023/09/28 20:08:30 ATM switched on.
+2023/09/28 20:08:34 Authorized account 2859459814.
+2023/09/28 20:09:20 ATM switched off ('end' command).
+2023/09/28 20:09:27 ATM switched on.
+2023/09/28 20:09:34 Authorized account 2859459814.
+2023/09/28 20:10:27 ATM switched off ('end' command).
+2023/09/28 20:10:30 ATM switched on.
+2023/09/28 20:10:32 Authorized account 2859459814.
+2023/09/28 20:10:39 ATM switched off ('end' command).

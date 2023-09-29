@@ -1,7 +1,8 @@
-package domain
+package bank
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 )
 
@@ -11,7 +12,11 @@ import (
 type USD int32
 
 func (u USD) ToString() string {
-	return fmt.Sprintf("%0.2f", float32(u)/100)
+	return fmt.Sprintf("%0.2f", u.ToFloat())
+}
+
+func (u USD) ToFloat() float32 {
+	return float32(u) / 100
 }
 
 func USDFromString(value string) (USD, error) {
@@ -22,7 +27,7 @@ func USDFromString(value string) (USD, error) {
 		// TODO: Wrap error messages from ParseFloat to be more meaningful
 		return USD(0), err
 	}
-	return USD((float32(temp) * 100)), nil
+	return USD(float32(math.Round(temp * 100))), nil
 }
 
 func (u USD) MultipleOf(z USD) bool {

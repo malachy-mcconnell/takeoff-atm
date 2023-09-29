@@ -1,4 +1,4 @@
-package domain
+package bank
 
 import (
 	"errors"
@@ -49,6 +49,11 @@ func (t Transaction) AsStringSlice() []string {
 	}
 }
 
-func (t Transaction) humanReadableTabulated() string {
-	return ""
+func (t Transaction) AsTextRow() string {
+	dateString := t.dateTime.Format(time.DateOnly)
+	timeString := t.dateTime.Format(time.TimeOnly)
+	amountFloat := t.amount.ToFloat()
+	balanceFloat := t.BalanceAfter.ToFloat()
+	// Note the \n line terminator here:
+	return fmt.Sprintf("%s  %s%12.2f%12.2f\n", dateString, timeString, amountFloat, balanceFloat)
 }

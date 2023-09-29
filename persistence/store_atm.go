@@ -1,14 +1,14 @@
 package persistence
 
 import (
-	"github.com/malachy-mcconnell/takeoff-atm/domain"
+	"github.com/malachy-mcconnell/takeoff-atm/bank"
 	"os"
 )
 
 const pathATMBalance = "./data/atm.csv"
-const openingATMBalance = domain.USD(1000000)
+const openingATMBalance = bank.USD(1000000)
 
-func WriteATMBalance(ATM domain.ATM) error {
+func WriteATMBalance(ATM bank.ATM) error {
 	f, err := os.Create(pathATMBalance) // Always overwrite existing
 	if err != nil {
 		return err
@@ -22,7 +22,7 @@ func WriteATMBalance(ATM domain.ATM) error {
 	return nil
 }
 
-func SetATMBalance(ATM *domain.ATM) error {
+func SetATMBalance(ATM *bank.ATM) error {
 	data, err := os.ReadFile(pathATMBalance)
 	if err != nil {
 		return err
@@ -31,14 +31,14 @@ func SetATMBalance(ATM *domain.ATM) error {
 	if len(dataString) == 0 {
 		return ResetATMBalance(ATM)
 	}
-	ATM.Balance, err = domain.USDFromString(string(data))
+	ATM.Balance, err = bank.USDFromString(string(data))
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func ResetATMBalance(ATM *domain.ATM) error {
+func ResetATMBalance(ATM *bank.ATM) error {
 	ATM.Balance = openingATMBalance
 	return WriteATMBalance(*ATM)
 }
